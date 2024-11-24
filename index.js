@@ -21,7 +21,7 @@ const port = process.env.PORT || 3000;
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "http://127.0.0.1:8000", // Frontend origin
+        origin: process.env.FRONTEND_URL, // Frontend origin
         methods: ["GET", "POST"],
         credentials: true,
     },
@@ -37,8 +37,8 @@ if (process.env.NODE_ENV !== "production") {
 
 app.use(
     cors({
-        origin: "http://127.0.0.1:8000", // Frontend origin
-        credentials: true, // Allow cookies
+        origin: process.env.FRONTEND_URL,
+        credentials: true,
     })
 );
 app.use(express.json());
