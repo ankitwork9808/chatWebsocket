@@ -6,13 +6,10 @@ import session from "express-session";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import { dbConnection } from "./db/connection.js";
-import jwt from "jsonwebtoken";
-// Route imports
-import userRoutes from "./routes/user.js";
-import messageRoute from "./routes/Message.js";
+import OnlineUserService from './service/OnlineUserService.js';
 
-// Socket controller imports
-import messageController from "./controllers/message.js";
+// Route import
+import websocketRoute from './routes/websocket.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -57,47 +54,46 @@ app.use(
     })
 );
 
-// Routes
-app.use("/api/user", userRoutes);
-app.use("/api/user", messageRoute);
+// Websocket routes
+app.use("/api/websocket", (req, res, next) => {
+    req.io = io;
+    next();
+}, websocketRoute);
 
-const onlineUsers = {};
-
+// Socket.IO handlers
 io.on("connection", (socket) => {
     console.log(`User connected: ${socket.id}`);
     
+    // Register user
     socket.on('register', (username) => {
-        onlineUsers[username] = socket.id;
-        console.log(onlineUsers);
+        OnlineUserService.addUser(username, socket.id);
+        console.log("Online users:", OnlineUserService.onlineUsers);
     });
 
-    socket.on("sendTyping", (data) => {
-        io.to(onlineUsers[data.user_id]).emit("receiveSendTyping", {});
-    });
-
-    socket.on("sendMessage", async (messageData) => {
-        console.log("sendMessage", messageData)
-        try {
-            const { id_user, message, price } = messageData;
-            
-            io.to(onlineUsers[id_user]).emit("receiveMessage", {
-                message,
-                id_user,
-                price
-            });
-        } catch (error) {
-            console.error("Error sending message:", error);
-            io.to(onlineUsers[senderId]).emit("messageSent", {
-                success: false,
-                message: "Failed to send message",
-            });
+    // Typing event
+    socket.on("send_typing", (data) => {
+        const recipientSocketId = OnlineUserService.getSocketId(data.emit_to);
+        if (recipientSocketId) {
+            io.to(recipientSocketId).emit("receiving_typing", {});
         }
-        
     });
-    
+
+    // Media event
+    socket.on("send_media", (data) => {
+        const recipientSocketId = OnlineUserService.getSocketId(data.emit_to);
+        if (recipientSocketId) {
+            io.to(recipientSocketId).emit("receiving_media", {...data});
+        }
+    });
+
+    // Disconnect event
+    socket.on("disconnect", () => {
+        OnlineUserService.removeUser(socket.id);
+        console.log(`User with socket ${socket.id} disconnected`);
+    });
 });
 
-// Error handling
+// Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: "An unexpected error occurred", error: err.message });
