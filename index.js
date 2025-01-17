@@ -25,7 +25,7 @@ const io = new Server(server, {
 });
 
 // Establish DB connection
-const con = dbConnection();
+// const con = dbConnection();
 
 // Middleware
 if (process.env.NODE_ENV !== "production") {
