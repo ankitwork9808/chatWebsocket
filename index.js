@@ -74,7 +74,7 @@ io.on("connection", (socket) => {
     socket.on("send_typing", (data) => {
         const recipientSocketId = OnlineUserService.getSocketId(data.emit_to);
         if (recipientSocketId) {
-            io.to(recipientSocketId).emit("receiving_typing", {});
+            io.to(recipientSocketId).emit("receiving_typing", {...data});
         }
     });
 
