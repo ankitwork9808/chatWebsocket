@@ -20,8 +20,8 @@ const port = process.env.PORT || 3000;
 let server = null
 if(process.env.HTTPS) {
     const options = {
-        key: fs.readFileSync(process.env.CERT_privkey),
-        cert: fs.readFileSync(process.env.CERT_fullchain),
+        key: fs.readFileSync(process.env.CERT_PKEY),
+        cert: fs.readFileSync(process.env.CERT_FULLCHAIN),
     };
     server = https.createServer(options, app);
 } else {
