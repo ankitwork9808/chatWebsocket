@@ -1,5 +1,6 @@
 import express from "express";
 import http from "http";
+import https from "https";
 import { Server } from "socket.io";
 import cors from "cors";
 import session from "express-session";
@@ -7,6 +8,7 @@ import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import { dbConnection } from "./db/connection.js";
 import OnlineUserService from './service/OnlineUserService.js';
+import fs from 'fs';
 
 // Route import
 import websocketRoute from './routes/websocket.js';
@@ -15,7 +17,17 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Create HTTP server and attach Socket.IO
-const server = http.createServer(app);
+let server = null
+if(process.env.HTTPS) {
+    const options = {
+        key: fs.readFileSync(process.env.CERT_privkey),
+        cert: fs.readFileSync(process.env.CERT_fullchain),
+    };
+    server = https.createServer(options, app);
+} else {
+    server = http.createServer(app);
+}
+
 const io = new Server(server, {
     cors: {
         origin: process.env.FRONTEND_URL, // Frontend origin
