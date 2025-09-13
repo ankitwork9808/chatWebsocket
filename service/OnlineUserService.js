@@ -4,14 +4,27 @@ class OnlineUserService {
     }
 
     addUser(userId, socketId) {
-        this.onlineUsers[userId] = socketId;
+        //this.onlineUsers[userId] = socketId;
+        this.onlineUsers.hasOwnProperty(userId) ? this.onlineUsers[userId].push(socketId) : this.onlineUsers[userId] = [socketId]
     }
 
     removeUser(socketId) {
-        for (const [userId, socket] of Object.entries(this.onlineUsers)) {
-            if (socket === socketId) {
-                delete this.onlineUsers[userId];
-                break;
+        for (const userId in this.onlineUsers) {
+            const sockets = this.onlineUsers[userId];
+
+            const index = sockets.indexOf(socketId);
+            if (index !== -1) {
+                // Remove that socket
+                sockets.splice(index, 1);
+                console.log(`Socket ${socketId} removed for user ${userId}`);
+
+                // If no sockets left, remove user entirely
+                if (sockets.length === 0) {
+                    delete this.onlineUsers[userId];
+                    console.log(`User ${userId} is now offline`);
+                }
+
+                return;
             }
         }
     }
