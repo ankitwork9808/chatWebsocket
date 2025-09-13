@@ -111,7 +111,11 @@ app.use((err, req, res, next) => {
     res.status(500).json({ message: "An unexpected error occurred", error: err.message });
 });
 
+// Configure timeouts
+server.keepAliveTimeout = 60000; // 60 seconds
+server.headersTimeout = 60000; // 60 seconds
+
 // Start server
-server.listen(port, () => {
+server.listen(port, '0.0.0.0', () => {
     console.log(`Server is running on port ${port}`);
 });
